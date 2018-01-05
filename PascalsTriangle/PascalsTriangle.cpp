@@ -1,18 +1,19 @@
-//g++ PascalsTriangle.cpp -std=gnu++11 -lpthread -o PascalsTriangle.o
+//g++ PascalsTriangle.cpp -std=gnu++11 -lpthread -o PascalsTriangle
 
 #include "stdio.h"
 #include "iostream"
 #include "thread"
 #include "time.h"
 #include "sstream"
+#include <future>
 
-#define NUM_THREADS 128
+#define NUM_THREADS 4
 
-#define ITERATIONS 1024
+#define ITERATIONS 40
 
 using namespace std;
 
-unsigned long long getPascal(unsigned int row, unsigned int col) {
+unsigned long getPascal(unsigned int row, unsigned int col) {
 	if (col == 0 || col == row) {
 		return 1;
 	}
@@ -21,44 +22,41 @@ unsigned long long getPascal(unsigned int row, unsigned int col) {
 	}
 }
 
-int printBufferedRow(unsigned int row) {
+string getBufferedRow(unsigned int row) {
 	stringstream outBuffer;
-	outBuffer << (row);
-	outBuffer << ": ";
+//	outBuffer << (row);
+//	outBuffer << ": ";
 	for (unsigned int x = 0; x <= row; x++) {
 		outBuffer << getPascal(row, x);
 		outBuffer << " ";
 	}
-	cout << outBuffer.str() << endl;
-	return true;
+	return outBuffer.str();
 }
 
 int main(){
-	thread threads[NUM_THREADS] = {};
+	future<string> threads[NUM_THREADS];
 
 	unsigned int y=0;
 
-	while (y <= ITERATIONS) {
-		//assign threads
-		//don't start multithreading until after line 25
-		if (y <= 25) {
-			printBufferedRow(y);
+	for (unsigned short t = 0; t < NUM_THREADS; t++) {
+		threads[t] = async(launch::async, getBufferedRow, y);
+		y++;
+	}
+	bool loop = true;
+	while(loop){
+		for (unsigned short t=0; t < NUM_THREADS; t++) {
+			cout << threads[t].get() << endl;
+			threads[t] = async(launch::async, getBufferedRow, y);
 			y++;
-		}
-		else {
-			for (unsigned short t = 0; t < NUM_THREADS; t++) {
-				threads[t] = thread(printBufferedRow, y);
-				y++;
-			}
-			//tell main to wait until all threads execute
-			for (unsigned short t = 0; t < NUM_THREADS; t++) {
-				threads[t].join();
+			if(y>=ITERATIONS){
+				loop = false;
 			}
 		}
 	}
-	cout << "Success! Press Q and enter to quit: ";
-	unsigned char temp;
-	cin >> temp;
-
-    return 0;
+	for (unsigned short t=0; t < NUM_THREADS; t++) {
+		cout << threads[t].get() << endl;
+		y++;
+	}
+	return 0;
 }
+
