@@ -13,7 +13,7 @@
 
 using namespace std;
 
-unsigned long getPascal(unsigned int row, unsigned int col) {
+unsigned long long getPascal(unsigned int row, unsigned int col) {
 	if (col == 0 || col == row) {
 		return 1;
 	}
